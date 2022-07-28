@@ -100,14 +100,18 @@ export class GUI
 
 				// if the experiment is licensed, and running on the license rather than on credit,
 				// we use the license logo:
-				if (
-					self._psychoJS.getEnvironment() === ExperimentHandler.Environment.SERVER
-					&& typeof self._psychoJS.config.experiment.license !== "undefined"
-					&& self._psychoJS.config.experiment.runMode === "LICENSE"
-					&& typeof self._psychoJS.config.experiment.license.institutionLogo !== "undefined"
-				)
+				// [sijia] Only show institution logo if logoUrl not specified
+				if (logoUrl === undefined)
 				{
-					logoUrl = self._psychoJS.config.experiment.license.institutionLogo;
+					if (
+						self._psychoJS.getEnvironment() === ExperimentHandler.Environment.SERVER
+						&& typeof self._psychoJS.config.experiment.license !== "undefined"
+						&& self._psychoJS.config.experiment.runMode === "LICENSE"
+						&& typeof self._psychoJS.config.experiment.license.institutionLogo !== "undefined"
+					)
+					{
+						logoUrl = self._psychoJS.config.experiment.license.institutionLogo;
+					}
 				}
 
 				// prepare jquery UI dialog box:
@@ -117,7 +121,8 @@ export class GUI
 				// htmlCode += '<p style="font-size: 0.8em; padding: 0.5em; margin-bottom: 0.5em; color: #FFAA00; border: 1px solid #FFAA00;">&#9888; This experiment uses a deprecated version of the PsychoJS library. Consider updating to a newer version (e.g. by updating PsychoPy and re-exporting the experiment).</p>'+
 
 				// logo:
-				if (typeof logoUrl === "string")
+				// [sijia] Ensure logoUrl is not empty string
+				if (logoUrl && typeof logoUrl === "string")
 				{
 					htmlCode += '<img id="dialog-logo" class="logo" alt="logo" src="' + logoUrl + '">';
 				}
@@ -169,7 +174,8 @@ export class GUI
 							// if the field is required, we add an empty option and select it:
 							if (key.slice(-1) === "*")
 							{
-								htmlCode += "<option disabled selected>...</option>";
+								// [sijia] More descriptive dropdown prompt
+								htmlCode += "<option disabled selected hidden>Choose an option</option>";
 							}
 
 							for (const option of value)
@@ -178,12 +184,22 @@ export class GUI
 							}
 
 							htmlCode += "</select>";
-							jQuery("#" + keyId).selectmenu({ classes: {} });
+							// [sijia] Remove selectmenu(). Does nothing here because element not yet in DOM
+							// jQuery("#" + keyId).selectmenu({ classes: {} });
 						}
 						// otherwise we use a single string input:
 						/*if (typeof value === 'string')*/
 						else
 						{
+							// [sijia] Add to _setRequiredKeys if input already contains text, e.g. from query string or default value
+							if (
+								typeof value !== "undefined"
+								&& value.length > 0
+								&& self._requiredKeys.includes(keyId)
+							)
+							{
+								this._setRequiredKeys.set(keyId, true);
+							}
 							htmlCode += '<input type="text" name="' + key + '" id="' + keyId;
 							htmlCode += '" value="' + value + '" class="text ui-widget-content ui-corner-all">';
 						}
@@ -216,6 +232,9 @@ export class GUI
 				// init and open the dialog box:
 				self._dialogComponent.button = "Cancel";
 				jQuery("#expDialog").dialog({
+					// [sijia] Add dialog class 'no-close'
+					classes: {"ui-dialog": "no-close"},
+
 					width: "500",
 
 					autoOpen: true,
@@ -225,18 +244,20 @@ export class GUI
 					draggable: false,
 
 					buttons: [
-						{
-							id: "buttonCancel",
-							text: "Cancel",
-							click: function()
-							{
-								self._dialogComponent.button = "Cancel";
-								jQuery("#expDialog").dialog("close");
-							},
-						},
+						// [sijia] Remove cancel button
+						// {
+						// 	id: "buttonCancel",
+						// 	text: "Cancel",
+						// 	click: function()
+						// 	{
+						// 		self._dialogComponent.button = "Cancel";
+						// 		jQuery("#expDialog").dialog("close");
+						// 	},
+						// },
 						{
 							id: "buttonOk",
-							text: "Ok",
+							// [sijia] Rename Ok button to Continue
+							text: "Continue",
 							click: function()
 							{
 								// update dictionary:
@@ -413,7 +434,8 @@ export class GUI
 		// init and open the dialog box:
 		const self = this;
 		jQuery("#msgDialog").dialog({
-			dialogClass: "no-close",
+			// [sijia] Add dialog class 'no-close'
+			classes: {"ui-dialog": "no-close"},
 
 			width: "500",
 
@@ -425,7 +447,8 @@ export class GUI
 
 			buttons: (!showOK) ? [] : [{
 				id: "buttonOk",
-				text: "Ok",
+				// [sijia] Button text: uppercase OK
+				text: "OK",
 				click: function()
 				{
 					jQuery(this).dialog("destroy").remove();
@@ -575,11 +598,13 @@ export class GUI
 
 		if (typeof value !== "undefined" && value.length > 0)
 		{
-			gui._setRequiredKeys.set(event.target, true);
+			// [sijia] Use event.target.id so that id can be added before element exists
+			gui._setRequiredKeys.set(event.target.id, true);
 		}
 		else
 		{
-			gui._setRequiredKeys.delete(event.target);
+			// [sijia] Use event.target.id so that id can be added before element exists
+			gui._setRequiredKeys.delete(event.target.id);
 		}
 
 		gui._updateOkButtonStatus(false);

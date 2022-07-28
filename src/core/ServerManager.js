@@ -599,7 +599,8 @@ export class ServerManager extends PsychObject
 		}
 		catch (error)
 		{
-			console.error("error", error);
+			// [sijia] Remove console logging
+			// console.log("error", error);
 			throw Object.assign(response, { error });
 			// throw { ...response, error: error };
 		}

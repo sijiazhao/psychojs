@@ -104,7 +104,8 @@ export class Window extends PsychObject
 		{
 			self._windowAlreadyInFullScreen = !!document.fullscreenElement;
 
-			console.log("windowAlreadyInFullScreen:", self._windowAlreadyInFullScreen);
+			// [sijia] Remove console logging
+			// console.log("windowAlreadyInFullScreen:", self._windowAlreadyInFullScreen);
 
 			// the Window and all of the stimuli need to be updated:
 			self._needUpdate = true;
