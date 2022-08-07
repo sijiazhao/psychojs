@@ -682,7 +682,7 @@ export class PsychoJS
 		try
 		{
 			// [sijia] Use https://ipapi.co/json for IP data
-			const url = "https://ipapi.sco/json";
+			const url = "https://ipapi.co/json";
 			const response = await fetch(url, {
 				method: "GET",
 				mode: "cors",
