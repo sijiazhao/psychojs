@@ -112,15 +112,17 @@ export class PsychoJS
 	 * @param {boolean} [options.debug= true] whether to log debug information in the browser console
 	 * @param {boolean} [options.collectIP= false] whether to collect the IP information of the participant
 	 */
+	// [sijia] Changed defaults: debug = false; collectIP = true
 	constructor({
-		debug = true,
-		collectIP = false,
+		debug = false,
+		collectIP = true,
 		hosts = [],
 		topLevelStatus = true,
 	} = {})
 	{
 		// logging:
-		this._logger = new Logger(this, (debug) ? log4javascript.Level.DEBUG : log4javascript.Level.INFO);
+		// [sijia] Logging levels: ALL / WARN
+		this._logger = new Logger(this, (debug) ? log4javascript.Level.ALL : log4javascript.Level.WARN);
 		this._captureErrors();
 
 		// detect the browser:
@@ -482,8 +484,9 @@ export class PsychoJS
 			}
 
 			// save the results and the logs of the experiment:
+      // [sijia] Change change text to a saving data message
 			this.gui.finishDialog({
-				text: "Terminating the experiment. Please wait a few moments...",
+				text: "<p><b>Saving your data</b></p>Do not close your browser or leave this page",
 				nbSteps: 2 + ((isServerEnv) ? 1 : 0)
 			});
 
@@ -526,11 +529,12 @@ export class PsychoJS
 					this._window.closeFullScreen();
 
 					// redirect if redirection URLs have been provided:
-					if (isCompleted && typeof self._completionUrl !== "undefined")
+					// [sijia] Check completion/cancellation URL are not empty
+					if (isCompleted && self._completionUrl)
 					{
 						window.location = self._completionUrl;
 					}
-					else if (!isCompleted && typeof self._cancellationUrl !== "undefined")
+					else if (!isCompleted && self._cancellationUrl)
 					{
 						window.location = self._cancellationUrl;
 					}
@@ -666,7 +670,8 @@ export class PsychoJS
 		this._IP = {};
 		try
 		{
-			const url = "http://www.geoplugin.net/json.gp";
+			// [sijia] Use https://ipapi.co/json for IP data
+			const url = "https://ipapi.co/json";
 			const response = await fetch(url, {
 				method: "GET",
 				mode: "cors",
@@ -679,20 +684,22 @@ export class PsychoJS
 			{
 				throw `unable to obtain the IP of the participant: ${response.statusText}`;
 			}
-			const geoData = await response.json();
-
-			this._IP = {
-				IP: geoData.geoplugin_request,
-				country: geoData.geoplugin_countryName,
-				latitude: geoData.geoplugin_latitude,
-				longitude: geoData.geoplugin_longitude,
-			};
+			// const geoData = await response.json();
+			//
+			// this._IP = {
+			// 	IP: geoData.geoplugin_request,
+			// 	country: geoData.geoplugin_countryName,
+			// 	latitude: geoData.geoplugin_latitude,
+			// 	longitude: geoData.geoplugin_longitude,
+			// };
+			this._IP = await response.json();
 			this.logger.debug("IP information of the participant: " + util.toString(this._IP));
 		}
 		catch (error)
 		{
 			// throw { ...response, error };
-			throw Object.assign(response, { error });
+			// [sijia] Do not throw error if _getParticipantIPInfo fails
+			// throw Object.assign(response, { error });
 		}
 	}
 
