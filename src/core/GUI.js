@@ -389,7 +389,7 @@ export class GUI
 		if (showOK)
 		{
 			// [sijia] Button text: uppercase OK
-			markup += "<hr><button id='dialogOK' class='dialog-button' aria-label='Close dialog'>Ok</button>";
+			markup += "<hr><button id='dialogOK' class='dialog-button' aria-label='Close dialog'>OK</button>";
 		}
 		markup += "</div></div>";
 
