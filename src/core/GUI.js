@@ -146,6 +146,12 @@ export class GUI
 					markup += '<img id="dialog-logo" class="logo" alt="logo" src="' + logoUrl + '">';
 				}
 
+				// [sijia] Reinstate dialog information text
+				if (text && typeof text === "string")
+				{
+					markup += '<p class="dialog-info">' + text + '</p>';
+				}
+
 				// add a combobox or text areas for each entry in the dictionary:
 				Object.keys(dictionary).forEach((key, keyIdx) =>
 				{
@@ -199,11 +205,7 @@ export class GUI
 						else
 						{
 							// [sijia] Add to _setRequiredKeys if input already contains text, e.g. from query string or default value
-							if (
-								typeof value !== "undefined"
-								&& value.length > 0
-								&& self._requiredKeys.includes(keyId)
-							)
+							if (value && self._requiredKeys.includes(keyId))
 							{
 								this._setRequiredKeys.set(keyId, true);
 							}
@@ -631,22 +633,23 @@ export class GUI
 		{
 			if (typeof this._okButton !== "undefined")
 			{
+				// [sijia] Fix bug when changing _okButton's class
 				// locally the OK button is always enabled, otherwise only if all requirements have been fulfilled:
 				if (this._psychoJS.getEnvironment() === ExperimentHandler.Environment.LOCAL || allRequirementsFulfilled)
 				{
 					if (changeOKButtonFocus)
 					{
-						this._okButton.classList = ["dialog-button"];
+						this._okButton.className = "dialog-button";
 						this._okButton.focus();
 					}
 					else
 					{
-						this._okButton.classList = ["dialog-button"];
+						this._okButton.className = "dialog-button";
 					}
 				}
 				else
 				{
-					this._okButton.classList = ["dialog-button", "disabled"];
+					this._okButton.className = "dialog-button disabled";
 				}
 			}
 
