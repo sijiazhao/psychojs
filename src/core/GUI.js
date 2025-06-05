@@ -131,12 +131,16 @@ export class GUI
 
 				// if the experiment is licensed, and running on the license rather than on credit,
 				// we use the license logo:
-				if (self._psychoJS.getEnvironment() === ExperimentHandler.Environment.SERVER
-					&& typeof self._psychoJS.config.experiment.license !== "undefined"
-					&& self._psychoJS.config.experiment.runMode === "LICENSE"
-					&& typeof self._psychoJS.config.experiment.license.institutionLogo !== "undefined")
+				// [sijia] Only show institution logo if logoUrl not specified
+				if (logoUrl === undefined)
 				{
-					logoUrl = self._psychoJS.config.experiment.license.institutionLogo;
+					if (self._psychoJS.getEnvironment() === ExperimentHandler.Environment.SERVER
+						&& typeof self._psychoJS.config.experiment.license !== "undefined"
+						&& self._psychoJS.config.experiment.runMode === "LICENSE"
+						&& typeof self._psychoJS.config.experiment.license.institutionLogo !== "undefined")
+					{
+						logoUrl = self._psychoJS.config.experiment.license.institutionLogo;
+					}
 				}
 
 				// prepare the markup for the a11y-dialog:
@@ -148,14 +152,16 @@ export class GUI
 				// alert title and close button:
 				markup += "<div id='experiment-dialog-title' class='dialog-title'>";
 				markup += `<p>${title}</p>`;
-				markup += "<button id='dialogClose' class='dialog-close' data-a11y-dialog-hide aria-label='Cancel Experiment'>&times;</button>";
+				// [sijia] Remove close button
+				// markup += "<button id='dialogClose' class='dialog-close' data-a11y-dialog-hide aria-label='Cancel Experiment'>&times;</button>";
 				markup += "</div>";
 
 				// everything above the buttons is in a scrollable container:
 				markup += "<div class='scrollable-container'>";
 
 				// logo, if need be:
-				if (typeof logoUrl === "string")
+				// [sijia] Ensure logoUrl is not empty
+				if (logoUrl && typeof logoUrl === "string")
 				{
 					markup += '<img id="dialog-logo" class="logo" alt="logo" src="' + logoUrl + '">';
 				}
@@ -215,7 +221,9 @@ export class GUI
 							// if the field is required, we add an empty option and select it:
 							if (key.slice(-1) === "*")
 							{
-								markup += "<option disabled selected>...</option>";
+								// markup += "<option disabled selected>...</option>";
+								// [sijia] More descriptive dropdown prompt
+								markup += "<option disabled selected hidden>Choose an option...</option>";
 							}
 
 							for (const option of value)
@@ -229,6 +237,11 @@ export class GUI
 						//if (typeof value === 'string')
 						else
 						{
+							// [sijia] Add to _setRequiredKeys if input already contains text, e.g. from query string or default value
+							if (value && self._requiredKeys.includes(keyId))
+							{
+								this._setRequiredKeys.set(keyId, true);
+							}
 							markup += `<input type='text' name='${key}' id='${keyId}' value='${value}' class='text'>`;
 						}
 					}
@@ -253,10 +266,12 @@ export class GUI
 
 				// buttons:
 				markup += "<div class='dialog-button-group'>";
-				markup += "<button id='dialogCancel' class='dialog-button' aria-label='Cancel Experiment'>Cancel</button>";
+				// [sijia] Remove Cancel button
+				// markup += "<button id='dialogCancel' class='dialog-button' aria-label='Cancel Experiment'>Cancel</button>";
 				if (self._requireParticipantClick)
 				{
-					markup += "<button id='dialogOK' class='dialog-button disabled' aria-label='Start Experiment'>Ok</button>";
+					// [sijia] Rename Ok button to Continue
+					markup += "<button id='dialogOK' class='dialog-button disabled' aria-label='Start Experiment'>Continue</button>";
 				}
 				markup += "</div>"; // button-group
 
@@ -272,16 +287,18 @@ export class GUI
 				self._dialog.show();
 
 				// button callbacks:
-				self._dialogComponent.button = "Cancel";
-				self._cancelButton = document.getElementById("dialogCancel");
-				self._cancelButton.onclick = self._onCancelExperiment.bind(self);
+				// [sijia] Remove Cancel callbacks
+				// self._dialogComponent.button = "Cancel";
+				// self._cancelButton = document.getElementById("dialogCancel");
+				// self._cancelButton.onclick = self._onCancelExperiment.bind(self);
 				if (self._requireParticipantClick)
 				{
 					self._okButton = document.getElementById("dialogOK");
 					self._okButton.onclick = self._onStartExperiment.bind(self);
 				}
-				self._closeButton = document.getElementById("dialogClose");
-				self._closeButton.onclick = self._onCancelExperiment.bind(self);
+				// [sijia] Remove Close callbacks
+				// self._closeButton = document.getElementById("dialogClose");
+				// self._closeButton.onclick = self._onCancelExperiment.bind(self);
 
 				// update the OK button status:
 				self._updateDialog();
@@ -441,7 +458,8 @@ export class GUI
 			}
 			if (showOK)
 			{
-				markup += "<button id='dialogOK' class='dialog-button' aria-label='Close dialog'>Ok</button>";
+				// [sijia] Button text: uppercase OK
+				markup += "<button id='dialogOK' class='dialog-button' aria-label='Close dialog'>OK</button>";
 			}
 			markup += "</div>"; // button-group
 		}
@@ -756,11 +774,13 @@ export class GUI
 
 		if (typeof value !== "undefined" && value.length > 0)
 		{
-			gui._setRequiredKeys.set(event.target, true);
+			// [sijia] Use event.target.id so that id can be added before element exists
+			gui._setRequiredKeys.set(event.target.id, true);
 		}
 		else
 		{
-			gui._setRequiredKeys.delete(event.target);
+			// [sijia] Use event.target.id so that id can be added before element exists
+			gui._setRequiredKeys.delete(event.target.id);
 		}
 
 		gui._updateDialog(false);

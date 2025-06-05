@@ -111,9 +111,10 @@ export class PsychoJS
 	 * @param {boolean} [options.debug= true] - whether to log debug information in the browser console
 	 * @param {boolean} [options.collectIP= false] - whether to collect the IP information of the participant
 	 */
+	// [sijia] Changed defaults: debug = false; collectIP = true
 	constructor({
-		debug = true,
-		collectIP = false,
+		debug = false,
+		collectIP = true,
 		hosts = [],
 		topLevelStatus = true,
 		autoStartScheduler = true,
@@ -123,7 +124,8 @@ export class PsychoJS
 	} = {})
 	{
 		// logging:
-		this._logger = new Logger(this, (debug) ? log4javascript.Level.DEBUG : log4javascript.Level.INFO);
+		// [sijia] Logging levels: ALL / WARN
+		this._logger = new Logger(this, (debug) ? log4javascript.Level.ALL : log4javascript.Level.WARN);
 		if (captureErrors)
 		{
 			this._captureErrors();
@@ -143,7 +145,8 @@ export class PsychoJS
 		});
 
 		// add the pavlovia server to the list of hosts:
-		const pavloviaHosts = new Set([...hosts, "https://pavlovia.org/run/", "https://run.pavlovia.org/", "https://devlovia.org/run/", "https://run.devlovia.org/"]);
+		// [sijia] Add octalportal to hosts, remove devlovia
+		const pavloviaHosts = new Set([...hosts, "https://pavlovia.org/run/", "https://run.pavlovia.org/", "https://pavlovia.octalportal.com/run", "https://run.octalportal.com"]);
 		this._hosts = Array.from(pavloviaHosts);
 
 		// GUI:
@@ -187,7 +190,8 @@ export class PsychoJS
 		// whether to save results at the end of the experiment:
 		this._saveResults = saveResults;
 
-		this.logger.info("[PsychoJS] Version 2024.2.0");
+		// [sijia] Version bump and add -sijiazhao
+		this.logger.info("[PsychoJS] Version 2025.1.1-sijiazhao");
 		this.logger.info("[PsychoJS] Initialised.");
 
 		// hide the initialisation message:
@@ -583,8 +587,9 @@ export class PsychoJS
 			delete this._config.experiment.resultsUpload.lastUploadTimestamp;
 
 			// save the results and the logs of the experiment:
+			// [sijia] Change text to a saving data message
 			this.gui.finishDialog({
-				text: "Terminating the experiment. Please wait a few moments...",
+				text: "<p><b>Saving your data</b></p>Do not close your browser or leave this page",
 				nbSteps: ((this._saveResults) ? 2 : 0) + ((isServerEnv) ? 1 : 0)
 			});
 
@@ -627,11 +632,12 @@ export class PsychoJS
 				this.status = PsychoJS.Status.FINISHED;
 
 				// redirect if redirection URLs have been provided:
-				if (isCompleted && typeof this._completionUrl !== "undefined")
+				// [sijia] Check completion/cancellation URL are not empty
+				if (isCompleted && this._completionUrl)
 				{
 					window.location = this._completionUrl;
 				}
-				else if (!isCompleted && typeof this._cancellationUrl !== "undefined")
+				else if (!isCompleted && this._cancellationUrl)
 				{
 					window.location = this._cancellationUrl;
 				}
@@ -794,7 +800,8 @@ export class PsychoJS
 		this._IP = {};
 		try
 		{
-			const url = "http://www.geoplugin.net/json.gp";
+			// [sijia] Use ip.octalportal.com for IP data
+			const url = "https://ip.octalportal.com";
 			const getResponse = await fetch(url, {
 				method: "GET",
 				mode: "cors",
@@ -805,22 +812,27 @@ export class PsychoJS
 			});
 			if (getResponse.status !== 200)
 			{
-				throw `unable to obtain the IP of the participant: ${response.statusText}`;
+				// [sijia] Bugfix: incorrect object
+				throw `unable to obtain the IP of the participant: ${getResponse.statusText}`;
 			}
-			const geoData = await getResponse.json();
 
-			this._IP = {
-				IP: geoData.geoplugin_request,
-				country: geoData.geoplugin_countryName,
-				latitude: geoData.geoplugin_latitude,
-				longitude: geoData.geoplugin_longitude,
-			};
+			// [sijia] Store entire response
+			// const geoData = await getResponse.json();
+			//
+			// this._IP = {
+			// 	IP: geoData.geoplugin_request,
+			// 	country: geoData.geoplugin_countryName,
+			// 	latitude: geoData.geoplugin_latitude,
+			// 	longitude: geoData.geoplugin_longitude,
+			// };
+			this._IP = {ip: await getResponse.text()};
 			this.logger.debug("IP information of the participant:", util.toString(this._IP));
 		}
 		catch (error)
 		{
 			// throw { ...response, error };
-			throw Object.assign(response, { error });
+			// [sijia] Do not throw error if _getParticipantIPInfo fails
+			// throw Object.assign(response, { error });
 		}
 	}
 
