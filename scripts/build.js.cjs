@@ -42,7 +42,7 @@ for (var i = 0; i < process.argv.length; i++) {
 	},
 	bundle: true,
 	watch: shouldWatchDir,
-	sourcemap: true,
+	sourcemap: false,
 	entryPoints: ["src/index.js"],
 	minifySyntax: true,
 	minifyWhitespace: true,
